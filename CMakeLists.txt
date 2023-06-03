@@ -189,11 +189,11 @@ if (APPLE)
   endif()
 endif()
 
-CPMAddPackage("gh:corrosion-rs/corrosion@0.3.2")
+CPMAddPackage("gh:riidefi/corrosion#master")
 if(NOT UNIX)
   find_package(Corrosion REQUIRED)
 endif()
 
-corrosion_import_crate(MANIFEST_PATH source/rust/Cargo.toml)
+corrosion_import_crate(MANIFEST_PATH source/rust/Cargo.toml CRATE_TYPES cdylib)
 
 add_subdirectory(source)

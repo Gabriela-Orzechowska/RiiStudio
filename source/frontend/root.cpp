@@ -1,7 +1,6 @@
 #include <core/3d/gl.hpp>
 
 #include "EditorFactory.hpp"
-#include "LeakDebug.hpp"
 #include "root.hpp"
 #include <core/util/timestamp.hpp>
 #include <frontend/Fonts.hpp>
@@ -17,6 +16,7 @@
 #include <plugins/j3d/Scene.hpp>
 #include <rsl/Discord.hpp>
 #include <rsl/FsDialog.hpp>
+#include <rsl/LeakDebug.hpp>
 #include <rsl/Stb.hpp>
 
 namespace llvm {
@@ -29,7 +29,8 @@ bool IsAdvancedMode() { return gIsAdvancedMode; }
 
 namespace libcube::UI {
 void InstallCrate();
-}
+void ImageActionsInstaller();
+} // namespace libcube::UI
 
 namespace riistudio::frontend {
 
@@ -115,7 +116,7 @@ static void MSVCWarningWindow() {
 }
 
 void RootWindow::draw() {
-  DoLeakCheck();
+  rsl::DoLeakCheck();
   fileHostProcess();
 
   if (auto* a = getActive()) {
@@ -309,6 +310,7 @@ RootWindow::RootWindow()
   // Loads the plugins for file formats / importers
   InitAPI();
   libcube::UI::InstallCrate();
+  libcube::UI::ImageActionsInstaller();
 
   // Without this, clicking in the viewport with a mouse would move the window
   // when undocked.

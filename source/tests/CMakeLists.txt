@@ -19,11 +19,14 @@ target_link_libraries(tests PUBLIC
 	plate
 	plugins
 	vendor
+  rsmeshopt
 )
 # Since we rely on rszst.exe
 add_dependencies(tests cli)
 # ???
 add_dependencies(tests plugins)
+
+add_dependencies(tests rsl)
 
 if (WIN32)
   set(LINK_LIBS
@@ -66,36 +69,11 @@ elseif(UNIX)
 	target_link_libraries(tests PUBLIC ${BZIP2_LIBRARY})
 endif()
 
-# Decentralized installers based on initialization of static objects
-#
-# The clang-tidy way would be:
-#
-#   (In the module)
-#   > volatile int MyModuleAnchorSource = 0;
-#
-#   (In the main binary)
-#   > extern volatile int MyModuleAnchorSource;
-#   > static int MyModuleAnchorDestination = MyModuleAnchorSource;
-#
-# I really don't like it.
-#
-if (MSVC)
-  # clang-cl
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET_TARGET_PROPERTIES(tests PROPERTIES LINK_FLAGS "-defaultlib:libcmt /WHOLEARCHIVE:source\\plugins\\plugins.lib")
-  else()
-	  SET_TARGET_PROPERTIES(tests PROPERTIES LINK_FLAGS "/WHOLEARCHIVE:plugins")
-  endif()
-else()
-  if (APPLE)
-  elseif (UNIX)
-    # --start-group, --end-group allows circular dependencies among object files
-    SET_TARGET_PROPERTIES(tests PROPERTIES LINK_FLAGS "-Wl,--start-group -ldl -lassimp -lglfw -lfreetype -lstdc++ -lm -lpthread")
-    # This is a hack to append a final link arg
-    target_link_libraries(tests PUBLIC "-Wl,--end-group")
-  else()
-    # SET_TARGET_PROPERTIES(tests PROPERTIES LINK_FLAGS "--whole_archive")
-  endif()
+if (UNIX)
+  # --start-group, --end-group allows circular dependencies among object files
+  SET_TARGET_PROPERTIES(tests PROPERTIES LINK_FLAGS "-Wl,--start-group -ldl -lassimp -lglfw -lfreetype -lstdc++ -lm -lpthread")
+  # This is a hack to append a final link arg
+  target_link_libraries(tests PUBLIC "-Wl,--end-group")
 endif()
 
 # DLLs for windows
@@ -128,6 +106,11 @@ endif()
 		  ${PROJECT_SOURCE_DIR}/../vendor/dll
 		  $<TARGET_FILE_DIR:tests>
   )
+add_custom_command(TARGET tests POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:tests> $<TARGET_FILE_DIR:tests> 
+  COMMAND_EXPAND_LISTS
+)
+
 if (WINDOWS)
   add_custom_command(
 	  TARGET tests 

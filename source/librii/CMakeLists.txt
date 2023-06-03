@@ -132,7 +132,7 @@ add_library(librii STATIC
 	"j3d/io/Sections/VTX1.cpp"
 	"j3d/io/Sections.hpp"
 	"j3d/io/Sections/MaterialData.cpp"
- "rhst/RHSTOptimizer.cpp" "rhst/MeshUtils.cpp" "rhst/TriangleFanSplitter.cpp" "rhst/HaroohieTriStripifier.cpp" "g3d/io/PolygonIO.cpp"
+ "rhst/RHSTOptimizer.cpp" "rhst/MeshUtils.cpp" "rhst/TriangleFanSplitter.cpp" "g3d/io/PolygonIO.cpp"
 
 
 	"assimp2rhst/Assimp.cpp"
@@ -168,7 +168,7 @@ if (UNIX)
   set(LINUX_LIBS curl)
 endif (UNIX)
 
-target_link_libraries(librii PUBLIC core LibBadUIFramework PRIVATE meshoptimizer draco::draco fort range-v3 json_struct vendor oishii ${LINUX_LIBS})
+target_link_libraries(librii PUBLIC core LibBadUIFramework rsmeshopt  PRIVATE meshoptimizer draco::draco fort range-v3 json_struct vendor oishii ${LINUX_LIBS})
 
 target_include_directories(librii
   PRIVATE

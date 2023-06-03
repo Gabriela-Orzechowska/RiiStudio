@@ -53,7 +53,6 @@ add_library(lib_frontend
 
  "renderer/InputState.hpp" "renderer/InputState.cpp"
  "Localization.cpp" "Localization.hpp"
- "LeakDebug.hpp"
  "Fonts.hpp"
 
  "level_editor/LevelEditor.hpp" "level_editor/LevelEditor.cpp"
@@ -87,12 +86,12 @@ add_library(lib_frontend
  "editors/BlightEditor.cpp"
  "editors/BlmapEditor.cpp"
  
-)
+ "properties/gc/Material/AdvTexConv.cpp" "properties/gc/Material/Merge.cpp")
 
 add_executable(frontend 
  "entry.cpp"
   ${PROJECT_SOURCE_DIR}/rc/RiiStudio.rc
-)
+ "properties/gc/Material/AdvTexConv.cpp" "properties/gc/Material/Merge.cpp")
 
 set(ASSIMP_DIR, ${PROJECT_SOURCE_DIR}/../vendor/assimp)
 
@@ -106,6 +105,7 @@ target_link_libraries(lib_frontend PUBLIC
 	vendor
   LibBadUIFramework
   updater
+  rsmeshopt
 )
 target_link_libraries(frontend PUBLIC
   lib_frontend
@@ -140,27 +140,7 @@ elseif (UNIX AND NOT APPLE)
 	target_link_libraries(frontend PUBLIC ${BZIP2_LIBRARY})
 endif()
 
-# Decentralized installers based on initialization of static objects
-#
-# The clang-tidy way would be:
-#
-#   (In the module)
-#   > volatile int MyModuleAnchorSource = 0;
-#
-#   (In the main binary)
-#   > extern volatile int MyModuleAnchorSource;
-#   > static int MyModuleAnchorDestination = MyModuleAnchorSource;
-#
-# I really don't like it.
-#
-if (MSVC)
-  # clang-cl
-  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    SET_TARGET_PROPERTIES(frontend PROPERTIES LINK_FLAGS "-defaultlib:libcmt /WHOLEARCHIVE:source\\plugins\\plugins.lib")
-  else()
-	  SET_TARGET_PROPERTIES(frontend PROPERTIES LINK_FLAGS "/WHOLEARCHIVE:plugins")
-  endif()
-else()
+if (NOT MSVC)
   if (APPLE)
     execute_process(COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
     message(STATUS "Architecture: ${ARCHITECTURE}")
@@ -181,8 +161,6 @@ else()
     SET_TARGET_PROPERTIES(frontend PROPERTIES LINK_FLAGS "-Wl,--start-group -ldl -lassimp -lglfw -lfreetype -lstdc++ -lm")
     # This is a hack to append a final link arg
     target_link_libraries(frontend PUBLIC "-Wl,--end-group")
-  else()
-    # SET_TARGET_PROPERTIES(frontend PROPERTIES LINK_FLAGS "--whole_archive")
   endif()
   # TODO: Not functional (yet)
 	#add_link_options("-s USE_SDL=2 -s MAX_WEBGL_VERSION=2 -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0 --bind")
@@ -296,6 +274,11 @@ if (WIN32)
   )
 endif()
 
+add_custom_command(TARGET frontend POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:frontend> $<TARGET_FILE_DIR:frontend> 
+  COMMAND_EXPAND_LISTS
+)
+
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "RiiStudio")
 
 # CMake w/ ARM MacOS GCC does not work with PCH. Passes "-Xarch_arm" which is not valid on GCC.
@@ -307,3 +290,4 @@ if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND ${CMAKE_SYSTEM_NAME} MATCHES "
 endif()
 
 add_dependencies(frontend cli)
+add_dependencies(frontend rsl)
