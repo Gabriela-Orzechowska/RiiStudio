@@ -57,7 +57,10 @@ class FilteredFiledialog(bpy.types.Operator, ImportHelper):
 	if BLENDER_30: filter_glob : filter_glob
 
 	def execute(self, context):
-		setattr(self.string_prop_namespace, self.string_prop_name, bpy.path.relpath(self.filepath))
+		try:
+			setattr(self.string_prop_namespace, self.string_prop_name, bpy.path.relpath(self.filepath))
+		except ValueError:
+			setattr(self.string_prop_namespace, self.string_prop_name, bpy.path.abspath(self.filepath))
 		return {'FINISHED'}
 
 	def invoke(self, context, event):
